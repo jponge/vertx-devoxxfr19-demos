@@ -97,12 +97,12 @@ public class EdgeService extends AbstractVerticle {
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_OK)
       .rxSendJsonObject(data)
-      .flatMap(mlResponse -> {
+      .map(mlResponse -> {
         JsonObject mlData = mlResponse.body();
         lastFiveMeasures
           .put("pressureDropping", mlData.getDouble("slope") < -0.1d)
           .put("regressionData", mlData);
-        return Single.just(lastFiveMeasures);
+        return lastFiveMeasures;
       });
   }
 
