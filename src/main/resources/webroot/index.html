@@ -26,6 +26,14 @@
     body {
       padding-top: 1em;
     }
+    .tyrePressure {
+      border-left: solid 12px white;
+      padding-left: 1em;
+      margin-top: 0.5em;
+    }
+    .updated {
+      border-left: solid 12px #9400D3;
+    }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.3.0/dist/sockjs.min.js"
           integrity="sha256-hA6gdrQ9v1ZKkJuwgtwod0CpbzxEg/zAJPcXYwba7Mc=" crossorigin="anonymous"></script>
@@ -35,9 +43,14 @@
 
 <div class="container">
 
-  <div class="row">
+  <div class="row mb-4">
     <div class="col-12">
-      <h3>Throughput: <span id="throughput"></span></h3>
+      <div class="card">
+        <div class="card-body bg-light">
+          <h3 class="float-left">Throughput: <span id="throughput"></span></h3>
+          <h3 class="float-right"><span class="badge badge-secondary" id="counter">0</span> events received</h3>
+        </div>
+      </div>
     </div>
     <div class="col-12" id="measures">
     </div>
@@ -48,16 +61,26 @@
 <script>
 
   const bus = new EventBus("/eventbus");
+  let counter = 0;
 
   bus.onopen = function () {
 
     bus.registerHandler("client.updates.measures", function (error, message) {
       const tyreId = message.body.tyreId;
       const pressure = message.body.pressure.toFixed(2);
+
       if ($(`#measures > #m-${tyreId}`).length === 0) {
-        $("#measures").append("<div id=\"m-" + tyreId + "\"></div>");
+        $("#measures").append("<div class=\"tyrePressure\" id=\"m-" + tyreId + "\"></div>");
       }
-      $(`#m-${tyreId}`).html(`<strong>Tyre ${tyreId}</strong> current pressure: ${pressure}`);
+
+      let tyreDiv = $(`#m-${tyreId}`);
+      tyreDiv.html(`<strong>Tyre ${tyreId}</strong> current pressure: ${pressure}`);
+      tyreDiv.addClass("updated");
+      setTimeout(function () {
+        tyreDiv.removeClass("updated");
+      }, 1000);
+
+      $("#counter").html(counter++);
     });
 
     bus.registerHandler("client.updates.throughput", function (error, message) {
