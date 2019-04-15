@@ -30,16 +30,32 @@
   <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.3.0/dist/sockjs.min.js"
           integrity="sha256-hA6gdrQ9v1ZKkJuwgtwod0CpbzxEg/zAJPcXYwba7Mc=" crossorigin="anonymous"></script>
   <script src="https://cdn.jsdelivr.net/npm/vertx3-eventbus-client@3.7.0/vertx-eventbus.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment-with-locales.min.js"
+          integrity="sha256-AdQN98MVZs44Eq2yTwtoKufhnU+uZ7v2kXnD5vqzZVo=" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.11/lodash.min.js"
+          integrity="sha256-7/yoZS3548fXSRXqc/xYzjsmuW3sFKzuvOCHd06Pmps=" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
 </head>
 <body>
 
 <div class="container">
 
-  <div class="row">
+  <div class="row mb-4">
     <div class="col-12">
-      <h3>Throughput: <span id="throughput"></span></h3>
+      <div class="card">
+        <div class="card-body bg-light">
+          <h3 class="float-left">Throughput: <span id="throughput"></span></h3>
+          <h3 class="float-right"><span class="badge badge-secondary" id="counter">0</span> events received</h3>
+        </div>
+      </div>
     </div>
-    <div class="col-12" id="measures">
+  </div>
+
+  <div class="row">
+    <div class="col-4" id="measures">
+    </div>
+    <div class="col-8">
+      <canvas id="pressureChart"></canvas>
     </div>
   </div>
 
@@ -48,10 +64,110 @@
 <script>
 
   const bus = new EventBus("/eventbus");
+  var counter = 0;
+
+
+  Chart.defaults.line.spanGaps = true;
+  var config = {
+    responsive: false,
+    type: 'line',
+    data: {
+      labels: [],
+      datasets: []
+    },
+    options: {
+      legend: {
+        position: "bottom"
+      },
+      line: {
+        spanGaps: true
+      },
+      tooltips: {
+        enabled: false
+      },
+      title: {
+        text: 'Pressure monitoring'
+      },
+      scales: {
+        xAxes: [{
+          type: 'time',
+          time: {
+            parser: 'HH:mm',
+            tooltipFormat: 'HH:mm'
+          },
+          scaleLabel: {
+            display: true,
+            labelString: 'Date'
+          }
+        }],
+        yAxes: [{
+          scaleLabel: {
+            display: true,
+            labelString: 'value'
+          }
+        }]
+      }
+    }
+  };
+
+  var ctx = document.getElementById('pressureChart').getContext('2d');
+  var pressureChart = new Chart(ctx, config);
+
+  /**
+   * Update the pressure chart on a new EB Message by
+   * - adding a new label with the current moment
+   * - adding a new dataset if this Tyre is no already known
+   * - add the current pressure ad point to the dataset or an undefined point
+   *   for all the other datasets to span the gaps between points and draw a nice line (...)
+   * @param message
+   */
+  var updatePressureChart = function updatePressureChart(message) {
+    const currentMoment = moment().toDate();
+    config.data.labels.push(currentMoment);
+
+    const datasetIndex = _.findIndex(config.data.datasets, function (elm) {
+      return elm.label === "Tyre" + message.body.tyreId
+    });
+
+    _.forEach(config.data.datasets, function (dataset) {
+      if (dataset.label === "Tyre" + message.body.tyreId) {
+        dataset.data.push(message.body.pressure);
+      } else {
+        dataset.data.push(undefined);
+      }
+    });
+
+    if (datasetIndex === -1) {
+      var dataset = {
+        label: 'Tyre' + message.body.tyreId,
+        borderColor: getRandomColor(),
+        backgroundColor: "transparent",
+        data: [message.body.pressure]
+      };
+      config.data.datasets.push(dataset);
+    }
+    // For real time update !
+    // pressureChart.update();
+  }
+
+  var getRandomColor = function getRandomColor() {
+    var r = Math.floor(Math.random() * 255);
+    var g = Math.floor(Math.random() * 255);
+    var b = Math.floor(Math.random() * 255);
+    return "rgba(" + r + "," + g + "," + b + ", 0.8)";
+  }
+
+  setInterval(function () {
+    pressureChart.update(0);
+  }, 1000);
 
   bus.onopen = function () {
-
     bus.registerHandler("client.updates.measures", function (error, message) {
+
+      $("#counter").html(counter++);
+
+      updatePressureChart(message);
+
       const tyreId = message.body.tyreId;
       const pressure = message.body.pressure.toFixed(2);
       if ($(`#measures > #m-${tyreId}`).length === 0) {
@@ -60,11 +176,13 @@
       $(`#m-${tyreId}`).html(`<strong>Tyre ${tyreId}</strong> current pressure: ${pressure}`);
     });
 
+
     bus.registerHandler("client.updates.throughput", function (error, message) {
       $("#throughput").text(`${message.body} ingestions / second`);
     });
 
     bus.registerHandler("client.updates.alert", function (error, message) {
+      console.log(message);
       const tyreId = message.body.tyreId;
       const alertPresent = message.body.alert;
       const p = $(`#m-${tyreId}`);
@@ -76,36 +194,6 @@
         p.addClass("bg-white text-body");
       }
     });
-
-    // bus.registerHandler("client.updates.counter", function (error, message) {
-    //   var id = message.body.gateId + 1;
-    //   var total = message.body.total;
-    //   $("#counter-" + id + " .badge").text(total);
-    // });
-    //
-    // bus.registerHandler("client.updates.aggregates", function (error, message) {
-    //   var aggregates = message.body;
-    //   for (var i = 0; i < 3; i++) {
-    //     var count = aggregates[i.toString()];
-    //     var tag = "#thrpt-" + (i + 1);
-    //     $(tag + " .badge").text(count);
-    //     var n = parseFloat(count);
-    //     if (n > 2.0) {
-    //       $(tag).removeClass("btn-light");
-    //       $(tag).removeClass("btn-warning");
-    //       $(tag).addClass("btn-danger");
-    //     } else if (n > 1.5) {
-    //       $(tag).removeClass("btn-light");
-    //       $(tag).removeClass("btn-danger");
-    //       $(tag).addClass("btn-warning");
-    //     } else {
-    //       $(tag).removeClass("btn-danger");
-    //       $(tag).removeClass("btn-warning");
-    //       $(tag).addClass("btn-light");
-    //     }
-    //   }
-    // });
-
   }
 
 </script>
