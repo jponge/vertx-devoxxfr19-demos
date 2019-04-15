@@ -1,4 +1,4 @@
-# LavaJUG 2019 Eclipse Vert.x demo
+# Devoxx France 2019 Eclipse Vert.x demo
 
 Initial implementation by [Julien Ponge](https://julien.ponge.org/) at _Red Hat, Inc_.
 
