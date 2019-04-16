@@ -55,19 +55,19 @@ public class EdgeService extends AbstractVerticle {
   private void fetch(RoutingContext ctx) {
     String tyreId = ctx.pathParam("tyreId");
 
-    Single<JsonObject> enrichedMeasureData = webClient
-      .get(3000, "localhost", "/last/5/" + tyreId)
-      .as(BodyCodec.jsonObject())
-      .expect(ResponsePredicate.SC_OK)
-      .rxSend()
-      .flatMap(this::enrichWithMachineLearning);
-
     Single<JsonObject> inventoryData = webClient
       .get(3001, "localhost", "/" + tyreId)
       .as(BodyCodec.jsonObject())
       .expect(ResponsePredicate.SC_OK)
       .rxSend()
       .map(HttpResponse::body);
+
+    Single<JsonObject> enrichedMeasureData = webClient
+      .get(3000, "localhost", "/last/5/" + tyreId)
+      .as(BodyCodec.jsonObject())
+      .expect(ResponsePredicate.SC_OK)
+      .rxSend()
+      .flatMap(this::enrichWithMachineLearning);
 
     Single
       .zip(enrichedMeasureData, inventoryData, JsonObject::mergeIn)
