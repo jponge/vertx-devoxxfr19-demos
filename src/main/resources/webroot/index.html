@@ -76,36 +76,6 @@
         p.addClass("bg-white text-body");
       }
     });
-
-    // bus.registerHandler("client.updates.counter", function (error, message) {
-    //   var id = message.body.gateId + 1;
-    //   var total = message.body.total;
-    //   $("#counter-" + id + " .badge").text(total);
-    // });
-    //
-    // bus.registerHandler("client.updates.aggregates", function (error, message) {
-    //   var aggregates = message.body;
-    //   for (var i = 0; i < 3; i++) {
-    //     var count = aggregates[i.toString()];
-    //     var tag = "#thrpt-" + (i + 1);
-    //     $(tag + " .badge").text(count);
-    //     var n = parseFloat(count);
-    //     if (n > 2.0) {
-    //       $(tag).removeClass("btn-light");
-    //       $(tag).removeClass("btn-warning");
-    //       $(tag).addClass("btn-danger");
-    //     } else if (n > 1.5) {
-    //       $(tag).removeClass("btn-light");
-    //       $(tag).removeClass("btn-danger");
-    //       $(tag).addClass("btn-warning");
-    //     } else {
-    //       $(tag).removeClass("btn-danger");
-    //       $(tag).removeClass("btn-warning");
-    //       $(tag).addClass("btn-light");
-    //     }
-    //   }
-    // });
-
   }
 
 </script>
