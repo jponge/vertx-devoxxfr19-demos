@@ -17,42 +17,17 @@
 package demo.inventory;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
-import io.vertx.ext.web.Router;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class InventoryApi extends AbstractVerticle {
 
-  private final Logger logger = LoggerFactory.getLogger(InventoryApi.class);
+  /*
+   * Spec:
+   *   - Port 3001
+   *   - HTTP GET /tyreId -> {tyreId, brand}
+   */
 
   @Override
   public void start() {
-    Router router = Router.router(vertx);
-
-    router.get("/:tyreId").handler(ctx -> {
-      String tyreId = ctx.pathParam("tyreId");
-      JsonObject response = new JsonObject()
-        .put("tyreId", tyreId)
-        .put("brand", brandFor(tyreId));
-      ctx.response()
-        .putHeader("Content-Type", "application/json")
-        .end(response.encode());
-    });
-
-    vertx.createHttpServer()
-      .requestHandler(router)
-      .listen(3001);
-  }
-
-  private String brandFor(String tyreId) {
-    return tyreId.hashCode() % 2 == 0 ? "Miecholin" : "Brie Jay Stone";
-  }
-
-  public static void main(String[] args) {
-    Vertx
-      .vertx()
-      .deployVerticle(new InventoryApi());
+    
   }
 }
