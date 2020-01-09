@@ -15,7 +15,7 @@
  */
 
 plugins {
-  id("io.vertx.vertx-plugin") version "0.5.0"
+  id("io.vertx.vertx-plugin") version "1.0.1"
 }
 
 repositories {
