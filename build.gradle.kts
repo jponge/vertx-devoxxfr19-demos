@@ -32,16 +32,19 @@ dependencies {
   implementation("io.vertx:vertx-web-client")
 
   implementation("io.vertx:vertx-mongo-client")
-  implementation("io.vertx:vertx-kafka-client")
+  implementation("io.vertx:vertx-kafka-client") {
+    exclude("org.slf4j", "slf4j-log4j12")
+  }
 
-  testCompile("org.junit.jupiter:junit-jupiter-api:5.4.2")
-  testCompile("org.assertj:assertj-core:3.11.1")
-  testRuntime("org.junit.jupiter:junit-jupiter-engine:5.4.2")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:5.4.2")
+  testImplementation("org.assertj:assertj-core:3.11.1")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.4.2")
 }
 
 vertx {
   mainVerticle = "demo.MainVerticle"
-  vertxVersion = "3.7.0"
+  vertxVersion = "3.8.4"
+  jvmArgs = listOf("-Dvertx.logger-delegate-factory-class-name=io.vertx.core.logging.SLF4JLogDelegateFactory")
 }
 
 tasks.withType<Test> {
